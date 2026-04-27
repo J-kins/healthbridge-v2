@@ -50,6 +50,13 @@ const PatientLayout: React.FC = () => {
             <Icon name="heart" size={20} />
             {sidebarOpen && <span>Saved Clinics</span>}
           </Link>
+          <Link
+            to="/patient/profile"
+            className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-neutral-100 transition-colors text-neutral-700"
+          >
+            <Icon name="user" size={20} />
+            {sidebarOpen && <span>Profile</span>}
+          </Link>
         </nav>
 
         {/* User Section */}

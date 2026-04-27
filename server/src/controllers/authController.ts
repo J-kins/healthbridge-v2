@@ -1,9 +1,7 @@
 import jwt from 'jsonwebtoken';
 import bcryptjs from 'bcryptjs';
 import { AuthRequest, AuthResponse, User } from '../types/index.js';
-
-// Mock database - replace with real DB
-const users: Map<string, any> = new Map();
+import * as db from '../database/connection.js';
 
 export async function register(data: AuthRequest & { first_name?: string; last_name?: string }): Promise<AuthResponse> {
   const { email, password, first_name, last_name } = data;
@@ -22,7 +20,12 @@ export async function register(data: AuthRequest & { first_name?: string; last_n
   }
 
   // Check if user exists
-  if (users.has(email)) {
+  const existingUser = await db.queryOne(
+    'SELECT id FROM users WHERE email = ?',
+    [email]
+  );
+
+  if (existingUser) {
     const error: any = new Error('User already exists');
     error.status = 409;
     throw error;
@@ -32,34 +35,30 @@ export async function register(data: AuthRequest & { first_name?: string; last_n
   const salt = await bcryptjs.genSalt(10);
   const hashedPassword = await bcryptjs.hash(password, salt);
 
-  // Create user
-  const user = {
-    id: users.size + 1,
-    email,
-    password: hashedPassword,
-    first_name,
-    last_name,
-    role: 'patient' as const,
-    is_active: true,
-    created_at: new Date(),
-    updated_at: new Date()
-  };
+  // Create user in database
+  const result = await db.execute(
+    'INSERT INTO users (email, password, first_name, last_name, role) VALUES (?, ?, ?, ?, ?)',
+    [email, hashedPassword, first_name || null, last_name || null, 'patient']
+  );
 
-  users.set(email, user);
+  const userId = (result as any).insertId || (result as any)[0]?.id;
 
   // Generate token
   const token = jwt.sign(
-    { id: user.id, email: user.email, role: user.role },
+    { id: userId, email, role: 'patient' },
     process.env.JWT_SECRET || 'secret',
     { expiresIn: process.env.JWT_EXPIRE || '7d' }
   );
 
-  const { password: _, ...userWithoutPassword } = user;
-
-  return {
-    token,
-    user: userWithoutPassword as User
+  const user: User = {
+    id: userId,
+    email,
+    first_name: first_name || '',
+    last_name: last_name || '',
+    role: 'patient'
   };
+
+  return { token, user };
 }
 
 export async function login(data: AuthRequest): Promise<AuthResponse> {
@@ -73,7 +72,11 @@ export async function login(data: AuthRequest): Promise<AuthResponse> {
   }
 
   // Find user
-  const user = users.get(email);
+  const user = await db.queryOne(
+    'SELECT id, email, password, first_name, last_name, role FROM users WHERE email = ?',
+    [email]
+  );
+
   if (!user) {
     const error: any = new Error('Invalid credentials');
     error.status = 401;
@@ -95,10 +98,13 @@ export async function login(data: AuthRequest): Promise<AuthResponse> {
     { expiresIn: process.env.JWT_EXPIRE || '7d' }
   );
 
-  const { password: _, ...userWithoutPassword } = user;
-
-  return {
-    token,
-    user: userWithoutPassword as User
+  const userResponse: User = {
+    id: user.id,
+    email: user.email,
+    first_name: user.first_name,
+    last_name: user.last_name,
+    role: user.role
   };
+
+  return { token, user: userResponse };
 }

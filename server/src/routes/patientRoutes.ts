@@ -1,6 +1,7 @@
-import express, { Router, Request, Response } from 'express';
+import express, { Router } from 'express';
 import { authMiddleware } from '../middleware/authMiddleware.js';
 import { requireRole } from '../middleware/roleMiddleware.js';
+import * as patientController from '../controllers/patientController.js';
 
 const router: Router = express.Router();
 
@@ -8,37 +9,19 @@ const router: Router = express.Router();
 router.use(authMiddleware);
 router.use(requireRole(['patient']));
 
-// GET /api/patient/dashboard
-router.get('/dashboard', async (req: Request, res: Response) => {
-  try {
-    const userId = (req as any).user.id;
-    // TODO: Implement dashboard logic
-    res.json({ message: 'Patient dashboard', userId });
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
-  }
-});
+// Dashboard
+router.get('/dashboard', patientController.getDashboard);
 
-// GET /api/patient/appointments
-router.get('/appointments', async (req: Request, res: Response) => {
-  try {
-    const userId = (req as any).user.id;
-    // TODO: Implement appointments logic
-    res.json({ message: 'Patient appointments', userId });
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
-  }
-});
+// Appointments
+router.get('/appointments', patientController.getAppointments);
+router.post('/appointments', patientController.bookAppointment);
 
-// GET /api/patient/saved-clinics
-router.get('/saved-clinics', async (req: Request, res: Response) => {
-  try {
-    const userId = (req as any).user.id;
-    // TODO: Implement saved clinics logic
-    res.json({ message: 'Patient saved clinics', userId });
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
-  }
-});
+// Saved Clinics
+router.get('/saved-clinics', patientController.getSavedClinics);
+router.post('/save-clinic', patientController.saveClinic);
+
+// Profile
+router.get('/profile', patientController.getProfile);
+router.put('/profile', patientController.updateProfile);
 
 export default router;

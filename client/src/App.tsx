@@ -10,6 +10,7 @@ import SearchView from './views/shared/SearchView';
 import PatientDashboardView from './views/patient/PatientDashboardView';
 import PatientAppointmentsView from './views/patient/PatientAppointmentsView';
 import PatientSavedClinicsView from './views/patient/PatientSavedClinicsView';
+import PatientProfileView from './views/patient/PatientProfileView';
 
 // Layouts
 import PatientLayout from './views/layouts/PatientLayout';
@@ -41,6 +42,7 @@ function App() {
             <Route path="dashboard" element={<PatientDashboardView />} />
             <Route path="appointments" element={<PatientAppointmentsView />} />
             <Route path="saved-clinics" element={<PatientSavedClinicsView />} />
+            <Route path="profile" element={<PatientProfileView />} />
           </Route>
         </Routes>
       </AuthProvider>
